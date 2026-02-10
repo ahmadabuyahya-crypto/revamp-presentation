@@ -1,0 +1,17 @@
+{
+  "name": "revamp",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "slidev build",
+    "dev": "slidev --open",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@slidev/cli": "^52.11.5",
+    "@slidev/theme-default": "latest",
+    "@slidev/theme-seriph": "latest",
+    "slidev-theme-vuetiful": "^0.3.1",
+    "vue": "^3.5.27"
+  }
+}
