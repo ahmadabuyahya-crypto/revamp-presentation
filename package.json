@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "slidev build",
+    "build:business": "slidev build slides-business.md",
     "dev": "slidev --open",
     "export": "slidev export"
   },
