@@ -1,23 +1,22 @@
 ---
-theme: seriph
+theme: vuetiful
 background: https://cover.sli.dev
-title: Nafith Frontend Core Revamp
+title: Nafith Frontend Revamp — Executive Overview
 info: |
   ## Nafith Frontend Core Revamp
-  Why We Rewrote & What We Gained
-class: text-center
+  Executive Overview
 transition: slide-left
 mdc: true
-lineNumbers: true
 drawings:
   persist: false
+layout: section
 ---
 
-# Nafith Frontend Core Revamp
+# Nafith Frontend Revamp
 
-## Technical Deep Dive
+## Executive Overview
 
-<div class="abs-bl m-6 text-left text-sm opacity-60">
+<div class="abs-bl m-6 !text-left text-sm opacity-60">
   Frontend Team
 </div>
 
@@ -26,7 +25,7 @@ drawings:
 </div>
 
 <!--
-This presentation covers the technical decisions, patterns, and implementation details of the frontend core revamp.
+Welcome. This is a high-level overview of why we rebuilt our frontend platform and what it means for the business.
 -->
 
 ---
@@ -37,736 +36,108 @@ transition: fade-out
 
 <v-clicks>
 
-1. Tech Stack Comparison
-2. Architecture & Code Organization
-3. Type Safety & Code Quality
-4. State Management
-5. UI Framework & Theming
-6. Routing & Navigation
-7. Internationalization (i18n)
-8. API Layer & Error Handling
-9. Performance Optimizations
-10. Developer Experience
+1. Why did we rebuild?
+2. What changed?
+3. What does this mean for the business?
+4. Where are we now?
+5. What's next?
 
 </v-clicks>
 
-<!--
-Each section covers a specific technical domain — the old approach, the new approach, and why the change was made.
--->
-
 ---
 layout: section
 ---
 
-# Tech Stack Comparison
-
-Old vs New — side by side
+# Why Did We Rebuild?
 
 ---
 
-# Tech Stack Comparison
+# The Problem
 
-<div class="overflow-auto">
-
-| Area | Old (frontend-core) | New (frontend-core-revamp) |
-| --- | --- | --- |
-| **Framework** | Vue 3.2 (mixed JS/TS) | Vue 3.5 (full TypeScript, strict mode) |
-| **Language** | JavaScript (some .ts files) | TypeScript throughout (`strict: true`) |
-| **State Mgmt** | Vuex 4.1 | Pinia 3.0 |
-| **UI Library** | PrimeVue 3.34 **+ Bootstrap 5.3** | Vuetify 3.9 (single library) |
-| **CSS** | 59 SCSS files + Bootstrap RTL/LTR | Native Scoped SCSS + Vuetify theming |
-| **Code Patterns** | Mixins + Options API + Composition API | Composition API + `<script setup>` only |
-| **Linting** | ESLint 8 (legacy config) | ESLint 9 (flat config + strict TS rules) |
-
-</div>
-
-<!--
-Here's the full side-by-side comparison. Notice the theme: consolidation and modernization. Two UI libraries became one. Three component styles became one. JavaScript became TypeScript. Monolithic became modular.
--->
-
----
-layout: section
----
-
-# Architecture & Code Organization
-
-From flat folders to feature modules
-
----
-layout: two-cols-header
----
-
-# Architecture & Code Organization
-
-::left::
-
-### Old: Flat, Role-Based
-
-```txt {*}{lines:false}
-src/
-├── components/        # 106 components
-│   ├── form/
-│   ├── layout/
-│   ├── portal/        # Deep nesting
-│   └── main/
-├── views/             # Separate from components
-├── services/          # Class-based APIs
-├── store/             # Vuex modules
-├── mixins/            # Shared logic
-├── composition/       # Some composables
-├── helpers/           # Utilities
-└── assets/sass/       # 59 SCSS files
-```
-
-::right::
-
-### New: Feature-Driven Modular
-
-```txt {*}{lines:false}
-src/
-├── features/          # Self-contained modules
-│   ├── auth/          # views + composables
-│   ├── sanad_management/
-│   ├── financial_details/
-│   ├── employee_management/
-│   └── ...
-├── shared/            # Reusable across features
-│   ├── ui/            # Base components
-│   ├── composables/   # Shared hooks
-│   ├── directives/    # Custom directives
-│   ├── utils/         # Pure utilities
-│   ├── constants/     # Type-safe constants
-│   └── interfaces/    # TypeScript interfaces
-├── services/api/      # Typed API layer
-├── stores/            # Pinia stores
-├── layouts/           # Public, Portal
-├── config/            # Plugin config
-└── locales/           # Feature-split i18n
-```
-
----
-
-# The Key Benefit
-
-Each feature is **self-contained** — its views, components, composables, and utils live together.
-
-Adding or removing a feature <span v-mark.underline.red>doesn't ripple through the entire codebase</span>.
-
-<!--
-This is the most important architectural change. Features are isolated modules. They can share from the shared layer, but they don't depend on each other. This makes the codebase navigable and maintainable.
--->
-
----
-layout: section
----
-
-# Type Safety & Code Quality
-
-From runtime errors to compile-time guarantees
-
----
-
-# Before: JavaScript + Optional TS
-
-<div class="mt-4">
-
-```javascript {all|2-3|all}{lines:true}
-// Old: No type safety, runtime errors possible
-static request(method, endpoint, data = null, configs = null) {
-    return axios[method](endpoint, data, configs)
-}
-```
-
-</div>
-
-<div class="mt-6">
-
-```javascript {all|3-4|6-7|all}{lines:true}
-// Mixins with implicit "this" bindings
-export default {
-    computed: {
-        ...mapGetters(["getUser", "isAuthenticated"]),
-        isCompanyUser() {
-            return this.getUser?.type === "COMPANY"
-        }
-    }
-}
-```
-
-</div>
-
-<v-click>
-
-<div class="mt-4 p-3 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg text-sm">
-
-**Problems**: No autocomplete, no refactoring safety, bugs only discovered at runtime, implicit `this` bindings from mixins
-
-</div>
-
-</v-click>
-
-<!--
-Look at this code. The request method accepts literally anything. The mixin injects properties via mapGetters with no way for the IDE to know what "getUser" returns. Every refactoring was a prayer.
--->
-
----
-
-# After: Strict TypeScript
-
-````md magic-move {lines: true}
-```typescript
-// Step 1: Typed API service functions
-export async function companyLogin(
-  credentials: LoginCredentials
-): Promise<AuthResponse> {
-  return apiService.post<AuthResponse>(
-    "/auth/company-login/",
-    credentials
-  );
-}
-```
-
-```typescript
-// Step 2: Composables with explicit typing
-export function useAuth() {
-  const authStore = useAuthStore();
-
-  const isAuthenticated = computed<boolean>(
-    () => authStore.isAuthenticated
-  );
-
-  return { isAuthenticated, companyLogin, logout };
-}
-```
-````
-
-<v-click>
-
-<div class="mt-4 p-3 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-lg text-sm">
-
-**Result**: Full IntelliSense, safe refactoring, bugs caught at compile time, explicit contracts
-
-</div>
-
-</v-click>
-
----
-
-# TypeScript Strict Mode Flags
-
-We enforce the strictest possible TypeScript configuration:
+Our platform grew, but the foundation didn't keep up.
 
 <v-clicks>
 
-- `noUnusedLocals` — No dead variables
-- `noUnusedParameters` — No dead parameters
-- `exactOptionalPropertyTypes` — Precise optional types
-- `noUncheckedIndexedAccess` — Safe array/object access
-- `useUnknownInCatchVariables` — Type-safe error handling
-- <span v-mark.circle.red>`no-explicit-any`</span> enforced via ESLint — **Zero** `any` types allowed
+- **Slow page loads** — all resources loaded upfront, even when unused
+- **Slow feature delivery** — adding one feature required changes across 5+ areas
+- **Growing technical debt** — ~27,000 lines of tangled code with no clear structure
 
 </v-clicks>
-
-<!--
-This last one is particularly important. We have a zero-any policy. If you can't type it, you need to think harder about your data model.
--->
-
----
-layout: section
----
-
-# State Management
-
-Vuex vs Pinia
-
----
-layout: two-cols-header
----
-
-# State Management: Vuex vs Pinia
-
-::left::
-
-### Before (Vuex — verbose)
-
-```javascript {all|3-8|9-13|14-17|all}{lines:true}
-// store/auth.js
-export default {
-  state: {
-    accessToken: null,
-    refreshToken: null,
-    user: null
-  },
-  mutations: {
-    setAccessToken(state, token) {
-      state.accessToken = token
-    },
-    setRefreshToken(state, token) {
-      state.refreshToken = token
-    },
-  },
-  actions: {
-    authenticate({ commit }, payload) {
-      commit("setAccessToken", payload.access)
-    },
-  },
-  getters: {
-    isAuthenticated: s => !!s.accessToken,
-  }
-}
-```
-
-::right::
-
-### After (Pinia — clean)
-
-```typescript {all|3-5|7-10|12-14|all}{lines:true} 
-// stores/auth.ts
-export const useAuthStore = defineStore("auth", () => {
-  const accessToken = ref<string | null>(null);
-  const isAuthenticated =
-    computed(() => !!accessToken.value);
-
-  function setAuthData(data: AuthResponse) {
-    accessToken.value = data.access;
-    refreshToken.value = data.refresh;
-  }
-
-  function clearAuthData() {
-    /* ... */
-  }
-
-  return {
-    accessToken,
-    isAuthenticated,
-    setAuthData,
-    clearAuthData,
-  };
-});
-```
-
----
-
-# Using the Store in Components
-
-````md magic-move {lines: true} 
-```javascript
-// Old: Vuex — string-based dispatch, no types
-computed: {
-  ...mapGetters(["isAuthenticated", "getUser"])
-}
-this.$store.dispatch("authenticate", tokens)
-```
-
-```typescript
-// New: Pinia — direct function calls, full IntelliSense
-const { isAuthenticated } = storeToRefs(useAuthStore());
-useAuthStore().setAuthData(tokens);
-```
-````
-
-
-
-<v-clicks>
-
-### Why Pinia Wins
-
-- No mutations layer — direct state updates
-- Full TypeScript support with auto-complete
-- No string-based dispatching — just function calls
-- Devtools integration built-in
-- Smaller bundle size
-- Composition API native
-
-</v-clicks>
-
-
-<!--
-The difference is dramatic. Pinia eliminated an entire layer of abstraction. No more mutations, no more string dispatching, no more mapGetters. Just functions with types.
--->
-
----
-layout: section
----
-
-# UI Framework & Theming
-
-Two libraries to one
-
----
-
-# Old: Two Libraries, Double the Problems
-
-<div class="grid grid-cols-2 gap-8 mt-4">
-
-<div>
-
-### PrimeVue 3.34
-<v-clicks at="1">
-
-- Interactive components (tables, dialogs, forms)
-- Its own CSS reset
-- Its own spacing system
-
-</v-clicks>
-</div>
-
-<div>
-
-### Bootstrap 5.3
-<v-clicks at="1">
-
-- Layout grid and utilities
-- Competing CSS reset
-- Different spacing/typography
-
-</v-clicks>
-</div>
-
-</div>
 
 <v-click>
 
 <div class="mt-6 p-4 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg">
 
-**The result**: Two RTL stylesheets (`bootstrap.rtl.css` + PrimeVue RTL overrides), inconsistent design, extra CSS shipped to users
+**Bottom line**: Every new feature took longer, cost more, and carried more risk than it should have.
 
 </div>
 
 </v-click>
 
+<!--
+The old system worked, but it was slowing us down. Every new feature meant working around accumulated problems. Bug fixes often introduced new bugs. This was unsustainable.
+-->
+
+---
+layout: section
 ---
 
-# New: One Unified Library — Vuetify 3.9
+# What Changed?
 
-<v-clicks>
+---
 
-- **Material Design 3** system — consistent design language
-- Built-in **grid system** (no Bootstrap needed)
-- Built-in **RTL support** (automatic with locale)
-- Built-in **theming** — 40+ custom color tokens (light + dark themes)
-- **Tree-shakeable** — Only used components are bundled
-- **Accessibility** — WCAG compliance built into every component
+# From Complexity to Clarity
+
+<div class="grid grid-cols-2 gap-12 mt-8">
+<div>
+
+### Before
+
+<v-clicks at="1">
+
+- **2 UI libraries** fighting each other
+- **2 different** coding patterns
+- **59 style files** with conflicts
+- **1 massive file** for all navigation (1,800+ lines)
+- All translations loaded on **every page**
 
 </v-clicks>
+</div>
+<div>
+
+### After
+
+<v-clicks at="1">
+
+- **1 unified** design system
+- **1 consistent** coding pattern
+- **Scoped styles** per feature — no conflicts
+- **Modular navigation** — each feature manages its own
+- Translations loaded **only when needed**
+
+</v-clicks>
+</div>
+</div>
+
+<!--
+The theme is consolidation. Two libraries became one. Three patterns became one. One monolithic file was split into manageable modules.
+-->
 
 <v-click>
 
-### Theme Configuration — Single Source of Truth
-
-```typescript {*}{lines:true}
-// config/vuetify.ts
-const lightTheme = {
-  colors: {
-    primary: "#2a7050",
-    secondary: "#f5f5f5",
-    error: "#B00020",
-    success: "#4CAF50",
-    // 40+ tokens...
-  },
-};
-```
+Adding a new feature = **adding one module**. No risk to existing functionality.
 
 </v-click>
 
 <!--
-One library. One design system. One source of truth for colors. No more fighting between frameworks.
+Think of it like LEGO blocks. Each module works independently. Adding or removing one doesn't break the others. This is what makes the new system scalable.
 -->
 
 ---
-layout: section
+layout: big-points
 ---
 
-# Routing & Navigation
-
-Monolith to modular
-
----
-layout: two-cols-header
----
-
-# Routing: Monolith vs Modular
-
-::left::
-
-### Before: 1,800+ Line File
-
-```javascript {*}{lines:false}
-// router/index.js — everything in one file
-const routes = [
-  { path: "/", component: Home },
-  { path: "/accounts/login/individual/",
-    ... },
-  { path: "/portal/sanad-create/",
-    children: [ /* 6 nested steps */ ]
-  },
-  { path: "/portal/sanads/", ... },
-  { path: "/portal/company/employees/",
-    ... },
-  // ... 80+ more routes
-]
-```
-
-::right::
-
-### After: Feature-Split Modules
-
-```typescript {*}{lines:false}
-// router/index.ts — clean orchestration
-import publicRoutes
-  from "./public";
-import sanadManagementRoutes
-  from "./sanadManagement";
-import financialDetailsRoutes
-  from "./financialDetails";
-import employeeManagementRoutes
-  from "./employeeManagement";
-import callbackRoutes
-  from "./callback";
-import sanadApprovalRoutes
-  from "./sanadApproval";
-```
-
----
-
-# Route Module Example
-
-```typescript {all|2-3|4|5|all}{lines:true}
-// router/sanadManagement.ts — each module owns its routes
-export default [
-  {
-    path: "sanads",
-    name: "sanadList",
-    component: () => import("@/features/sanad_management/views/SanadList.vue"),
-    meta: {
-      i18nPages: ["sanadManagement"],
-      requiresPermission: ["view_sanads"],
-    },
-  },
-  // ...
-];
-```
-
-<v-clicks>
-
-- Each feature **owns its routes**
-- Adding a feature = adding **one import**
-- Route guards leverage **typed metadata** (`requiresPermission: string[]`)
-- Dynamic **i18n loading** per route via `meta.i18nPages`
-
-</v-clicks>
-
-<!--
-Each feature module defines its own routes. The main router file just orchestrates imports. Adding a new feature means adding one import line.
--->
-
----
-layout: section
----
-
-# Internationalization
-
-Eager loading vs lazy loading
-
----
-
-# i18n: Eager vs Lazy
-
-<div class="grid grid-cols-2 gap-8">
-<div>
-
-### Before: Load Everything
-
-```javascript {*}{lines:true}
-// All translations loaded at startup
-import ar from "@/translations/ar.json";
-import en from "@/translations/en.json";
-
-const i18n = createI18n({
-  messages: { ar, en },
-  // Entire payload in memory
-});
-```
-
-</div>
-<div>
-
-### After: Lazy Per-Feature
-
-```typescript {all|3|6-8|all}{lines:true}
-// Only global translations at startup
-// Route metadata triggers lazy loading
-{ path: "sanads", meta: { i18nPages: ["sanadManagement"] } }
-
-// Navigation guard loads dynamically
-router.beforeEach(async (to) => {
-  if (to.meta.i18nPages) {
-    await loadAndSetPageMessages(to.meta.i18nPages);
-  }
-});
-```
-
-</div>
-</div>
-
----
-
-# Translation File Structure
-
-```txt {*}{lines:false}
-locales/
-├── en.json                # Global strings only
-├── ar.json
-├── auth/en.json           # Loaded only on auth pages
-├── sanadManagement/       # Loaded only on sanad pages
-├── financialDetails/      # Loaded only on financial pages
-└── ...                    # 15+ feature-specific locale folders
-```
-
-<v-clicks>
-
-- **Faster initial load** — only global strings shipped upfront
-- **Smaller memory footprint** — unused translations never loaded
-- **Easier maintenance** — each feature manages its own translations
-- **Scalable** — adding a new language = new JSON files per feature
-
-</v-clicks>
-
-<!--
-This is huge for performance. Instead of loading translations for 15+ features on every page load, we only load what the current page needs.
--->
-
----
-layout: section
----
-
-# API Layer & Error Handling
-
-Class-based to functional, typed, and resilient
-
----
-layout: two-cols-header
----
-
-# API Layer: Before & After
-
-::left::
-
-### Before: Loosely Typed
-
-```javascript {*}{lines:true}
-// services/BaseService.js
-class BaseService {
-  static endpoint(path) {
-    return `${this.appEndpoint}${path}`;
-  }
-
-  static request(
-    method,
-    endpoint,
-    data = null,
-    configs = null
-  ) {
-    return axios[method](
-      endpoint,
-      data,
-      configs
-    );
-  }
-}
-// No typed responses
-// No structured error handling
-```
-
-::right::
-
-### After: Typed & Structured
-
-```typescript {all|1-5|7-11|13-17|all}{lines:true}
-// services/api/apiService.ts
-const apiService = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL}/api/backend/`,
-  timeout: 10_000,
-  withCredentials: true,
-});
-
-// Custom error class
-class ApiError extends Error {
-  status?: number;
-  code?: string;
-  errors?: Record<string, string[]>;
-}
-
-// Typed service functions
-export async function getSanads(
-  params: SanadFilters
-): Promise<PaginatedResponse<Sanad>> {
-  return apiService.get("/sanads/", { params });
-}
-```
-
----
-
-# Token Refresh with Request Queuing
-
-```mermaid {scale: 0.7}
-sequenceDiagram
-    participant C1 as Request 1
-    participant C2 as Request 2
-    participant I as Interceptor
-    participant A as Auth Server
-
-    C1->>I: 401 Unauthorized
-    I->>A: Refresh Token
-    C2->>I: 401 Unauthorized
-    Note over I: Queue Request 2
-    A-->>I: New Access Token
-    I->>C1: Retry with new token
-    I->>C2: Retry with new token
-```
-
-Concurrent requests during token refresh are **queued and replayed** automatically — prevents race conditions and duplicate refresh calls.
-
-<!--
-This diagram shows our token refresh mechanism. When a request fails with 401, we start refreshing the token. Any other requests that fail during the refresh are queued and automatically retried with the new token.
--->
-
----
-layout: section
----
-
-# Performance Optimizations
-
-Bundle splitting, lazy loading, and removed overhead
-
----
-
-# Manual Chunk Splitting
-
-```typescript {all|2|3|4|5|6|7|all}{lines:true}
-// vite.config.ts — Optimized bundle strategy
-manualChunks: {
-  vuetify: ["vuetify"],
-  charts: ["chart.js"],
-  icons: ["@mdi/font"],
-  "vue-ecosystem": ["vue", "vue-router", "pinia"],
-  validation: ["vee-validate", "yup", "@vee-validate/rules"],
-  utils: ["@vueuse/core"],
-  locales: ["vue-i18n"],
-}
-```
-
-<v-clicks>
-
-- **Vendor caching** — Library chunks cached independently
-- **Parallel loading** — Browser loads multiple smaller chunks concurrently
-- **Bundle analysis** — `npm run build:analyze` generates visual report
-- **Lazy route loading** — Every route component loaded on demand
-- **Lazy i18n** — Translation files loaded per feature on navigation
-
-</v-clicks>
-
-
+# What Does This Mean for the Business?
 
 ---
 layout: fact
@@ -802,52 +173,143 @@ layout: fact
 </div>
 
 ---
-layout: section
----
 
-# Developer Experience
+# Business Impact
 
-The daily impact on the team
+<v-clicks>
 
----
+- **Faster page loads** — users only download what they need, when they need it
 
-# Developer Experience
+- **Fewer bugs reaching users** — errors are caught automatically before deployment
 
-| Aspect | Old | New |
-| --- | --- | --- |
-| **IDE Support** | Limited (JS, no strict types) | Full IntelliSense, auto-imports (TS) |
-| **Refactoring** | Risky (no compiler checks) | Safe (TypeScript catches breaking changes) |
-| **Component API** | Mixed (Options + Composition + Mixins) | Single standard (`<script setup>`) |
-| **Finding Code** | Search through flat folders | Navigate by feature module |
-| **Adding a Feature** | Touch 5+ directories | Create one feature folder |
-| **State Management** | `this.$store.dispatch("string")` | `useStore().method()` with types |
-| **Error Discovery** | Runtime (in browser) | Compile time (in editor) |
+- **Faster feature delivery** — developers add features in one place, not five
+
+- **Easier onboarding** — new developers can contribute faster with clear structure
+
+- **Future-proof** — modern technology stack with long-term support
+
+</v-clicks>
 
 <!--
-This table summarizes what the daily developer experience looks like. The new codebase is simply more pleasant to work in. IntelliSense works everywhere, refactoring is safe, and code organization is intuitive.
+Each of these points maps to a real cost saving or quality improvement. Fewer bugs means less support overhead. Faster delivery means features reach users sooner. Consistent design means a more professional product.
 -->
 
 ---
 layout: section
 ---
 
-# Technical Recap
+# Where Are We Now?
 
 ---
 
-# Key Technical Decisions
+# Migration Progress
+
+<div class="grid grid-cols-2 gap-6 mt-2">
+<div>
+
+### Completed
+
+<v-clicks at="1">
+
+- Core Platform & Shared Components
+- Public Pages (Home, FAQ, Contact, Privacy)
+- Authentication (IAM SSO, Company, OTP)
+- Financial Details (packages, invoices, subscriptions)
+- Employee Management (full CRUD + permissions)
+- Callback History (Individual & B2B)
+- Sanad Management (Individual)
+
+</v-clicks>
+</div>
+<div>
+
+### Remaining
+
+<v-clicks at="8">
+
+- Company Onboarding
+- Sanad Management (B2B)
+- Sanad Creation Wizards
+- Sanad Approval Flows
+- Portal Dashboard & Account Profile
+- Company Integration & Settings
+- Reports & Digital Signature
+- UI/UX Polish
+
+</v-clicks>
+</div>
+</div>
+
+---
+layout: big-points
+---
+
+# ~30%
+<div class="text-2xl mt-4 opacity-80">of modules fully migrated</div>
+
+<v-click>
+
+<div class="mt-8 text-lg">
+
+**10 of 28** modules complete — covering authentication, sanad management, employees, financials, and callbacks
+
+</div>
+
+</v-click>
+
+<!--
+We prioritized the most-used parts of the platform first. The modules that handle the most daily user traffic are already running on the new system.
+-->
+
+---
+layout: section
+---
+
+# What's Next?
+
+---
+
+# Roadmap
 
 <v-clicks>
 
-- **TypeScript `strict: true`** + zero `any` policy via ESLint — compile-time safety everywhere
-- **Composition API + `<script setup>` only** — single component paradigm, no mixins
-- **Pinia over Vuex** — eliminated mutations layer and string-based dispatch
-- **Vuetify as sole UI library** — removed Bootstrap, unified theming with 40+ design tokens
-- **Feature-driven modules** — self-contained folders with co-located views, composables, and utils
-- **Modular routing** — feature-split route files with typed `meta` for guards and i18n
-- **Lazy i18n** — per-route translation loading via `router.beforeEach` + `meta.i18nPages`
-- **Vite manual chunks** — vendor splitting for independent cache invalidation
-- **Typed API layer** — `ApiError` class + interceptor-based token refresh with request queuing
+- **Phase 1** (Ready For QA) — Core platform, auth, employees, financials, callback history
+
+- **Phase 2** (In Progress) — Sanad creation & approval flows, Sanad management, Sanad Settlement, Account managament, Portal Dashboard and Digital signatures, 
+
+- **Phase 3** (Upcoming) — Company onboarding, settings and integration, User profile and Reports
+
+</v-clicks>
+
+<v-click>
+
+<div class="mt-8 p-4 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-lg">
+
+Each phase builds on the previous one. The hardest work — the foundation — is already done.
+
+</div>
+
+</v-click>
+
+<!--
+The foundation is complete. Every new module we migrate goes faster than the last because the patterns are established and the shared components are ready.
+-->
+
+---
+
+# Summary
+
+<v-clicks>
+
+- **Why** — The old system was slowing us down and accumulating risk
+
+- **What** — Complete rebuild on modern, modular, and maintainable technology
+
+- **Impact** — Faster loads, fewer bugs, faster delivery, consistent experience
+
+- **Progress** — ~30% complete, core is done
+
+- **Next** — Sanad creation/approval flows, then onboarding and remaining modules
 
 </v-clicks>
 
@@ -867,5 +329,5 @@ Nafith Frontend Team
 </div>
 
 <!--
-Thank you for listening. Happy to dive deeper into any of the technical decisions.
+Thank you. Happy to take any questions about the timeline, priorities, or business impact.
 -->
