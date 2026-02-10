@@ -5,18 +5,18 @@ title: Nafith Frontend Revamp — Executive Overview
 info: |
   ## Nafith Frontend Core Revamp
   Executive Overview
-class: text-center
 transition: slide-left
 mdc: true
 drawings:
   persist: false
+layout: section
 ---
 
 # Nafith Frontend Revamp
 
 ## Executive Overview
 
-<div class="abs-bl m-6 text-left text-sm opacity-60">
+<div class="abs-bl m-6 !text-left text-sm opacity-60">
   Frontend Team
 </div>
 
@@ -134,7 +134,7 @@ Think of it like LEGO blocks. Each module works independently. Adding or removin
 -->
 
 ---
-layout: section
+layout: big-points
 ---
 
 # What Does This Mean for the Business?
@@ -241,7 +241,7 @@ layout: section
 </div>
 
 ---
-layout: fact
+layout: big-points
 ---
 
 # ~30%
